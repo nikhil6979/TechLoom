@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Your Cart - TechLoom{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-10 max-w-6xl">
+    
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ url_for('index') }}" class="text-slate-400 hover:text-indigo-600 transition">
+            <i class="fa-solid fa-arrow-left text-xl"></i>
+        </a>
+        <h2 class="text-3xl font-extrabold text-slate-800">Your Shopping Cart</h2>
+    </div>
+
+    {% if items %}
+    <div class="flex flex-col lg:flex-row gap-8">
+        
+        <!-- Cart Items List -->
+        <div class="flex-grow space-y-4">
+            {% for item in items %}
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 relative group">
+                <div class="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="flex-grow">
+                    <span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase">{{ item.__class__.__name__.replace('Product', '') }} Item</span>
+                    <h3 class="text-base font-semibold text-slate-800 leading-tight mb-1">{{ item.name }}</h3>
+                    <p class="text-[10px] text-slate-500 font-mono">SKU: {{ item.sku }}</p>
+                </div>
+                
+                <div class="text-right flex-shrink-0">
+                    <p class="text-lg font-bold text-slate-900 mb-1">₹{{ "{:,.0f}".format(item.price) }}</p>
+                    <button onclick="removeItem('{{ item.sku }}')" class="text-sm text-red-500 hover:text-red-700 font-medium transition opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <i class="fa-regular fa-trash-can mr-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="w-full lg:w-96 flex-shrink-0">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden sticky top-24">
+                <div class="p-6 bg-slate-50 border-b border-slate-200">
+                    <h3 class="text-xl font-bold flex items-center gap-2 text-slate-800">
+                        <i class="fa-solid fa-receipt text-indigo-600"></i> Order Summary
+                    </h3>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Subtotal ({{ items|length }} items)</span>
+                        <span class="font-medium">₹{{ "{:,.2f}".format(summary.subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Shipping</span>
+                        <span class="font-medium">₹{{ "{:,.2f}".format(summary.shipping) }}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>GST (18%)</span>
+                        <span class="font-medium">₹{{ "{:,.2f}".format(summary.tax) }}</span>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-slate-200 flex justify-between items-center">
+                        <span class="text-lg font-bold text-slate-800">Total</span>
+                        <span class="text-2xl font-black text-indigo-600">₹{{ "{:,.2f}".format(summary.total) }}</span>
+                    </div>
+                </div>
+                
+                <div class="p-6 pt-0">
+                    <form action="{{ url_for('checkout') }}" method="POST">
+                        <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-center gap-2 group">
+                            <i class="fa-solid fa-lock text-slate-400 group-hover:text-white transition"></i> Secure Checkout
+                        </button>
+                    </form>
+                    <p class="text-center text-xs text-slate-400 mt-4">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Payments are mock processed securely.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    {% else %}
+    <!-- Empty Cart State -->
+    <div class="text-center py-20 max-w-md mx-auto bg-white rounded-3xl shadow-sm border border-slate-100">
+        <div class="w-24 h-24 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fa-solid fa-cart-arrow-down text-4xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-800 mb-2">Your cart is empty</h3>
+        <p class="text-slate-500 mb-8">Looks like you haven't added anything to your cart yet.</p>
+        <a href="{{ url_for('index') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full transition shadow-md">
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function removeItem(sku) {
+        try {
+            const response = await fetch('/api/cart/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sku: sku })
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Error removing item:", error);
+        }
+    }
+</script>
+{% endblock %}
